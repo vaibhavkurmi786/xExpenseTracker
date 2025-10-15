@@ -25,13 +25,7 @@ const App = () => {
   });
   const [expense, setExpense] = useState(() => {
     const savedExpense = localStorage.getItem("expenses");
-    return savedExpense
-      ? JSON.parse(savedExpense)
-      : {
-          Food: [],
-          Entertainment: [],
-          Travel: [],
-        };
+    return savedExpense ? JSON.parse(savedExpense) : [];
   });
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [modalType, setModalType] = useState(""); // "income" or "expense"
@@ -67,9 +61,15 @@ const App = () => {
       {
         label: "Expenses",
         data: [
-          expense.Food.reduce((acc, item) => acc + item.amount, 0),
-          expense.Entertainment.reduce((acc, item) => acc + item.amount, 0),
-          expense.Travel.reduce((acc, item) => acc + item.amount, 0),
+          expense
+            .filter((exp) => exp.category === "Food")
+            .reduce((acc, item) => acc + item.amount, 0),
+          expense
+            .filter((exp) => exp.category === "Entertainment")
+            .reduce((acc, item) => acc + item.amount, 0),
+          expense
+            .filter((exp) => exp.category === "Travel")
+            .reduce((acc, item) => acc + item.amount, 0),
         ],
         backgroundColor: [
           "rgba(255, 99, 132, 0.2)",
@@ -103,21 +103,10 @@ const App = () => {
     if (newExpense.amount > balance) {
       enqueueSnackbar("Expense amount cannot be greater than balance!", {
         variant: "error",
-        autoHideDuration: 3000,
       });
       return;
     }
-    setExpense((prev) => ({
-      ...prev,
-      [newExpense.category]: [
-        ...prev[newExpense.category],
-        {
-          title: newExpense.title,
-          amount: newExpense.amount,
-          date: newExpense.date,
-        },
-      ],
-    }));
+    setExpense((prev) => [...prev, newExpense]);
 
     setBalance((prevBalance) => prevBalance - newExpense.amount);
   };
@@ -150,27 +139,22 @@ const App = () => {
     }
   };
 
-  const handleDeleteTransaction = (category, index) => {
-    const amountToRestore = expense[category][index].amount;
-
-    setExpense((prev) => ({
-      ...prev,
-      [category]: prev[category].filter((_, idx) => idx !== index),
-    }));
-
-    setBalance((prev) => prev + amountToRestore);
+  const handleDeleteTransaction = (index) => {
+    setExpense((prev) => {
+      const amountToRestore = prev[index].amount;
+      setBalance((b) => b + amountToRestore);
+      return prev.filter((_, idx) => idx !== index);
+    });
 
     enqueueSnackbar("Transaction deleted successfully!", {
       variant: "success",
-      autoHideDuration: 2000,
     });
   };
 
-  const handleEditTransaction = (category, index) => {
-    const transactionToEdit = expense[category][index];
+  const handleEditTransaction = (index) => {
+    const transactionToEdit = expense[index];
     setEditTransaction({
       ...transactionToEdit,
-      category,
       index,
     });
     setModalType("edit");
@@ -178,9 +162,8 @@ const App = () => {
   };
 
   const handleUpdateExpense = (updatedExpense) => {
-    const { category: oldCategory, index } = editTransaction;
-    const oldAmount = expense[oldCategory][index].amount;
-
+    const { index } = editTransaction;
+    const oldAmount = expense[index].amount;
     const balanceDifference = oldAmount - updatedExpense.amount;
     const newBalance = balance + balanceDifference;
 
@@ -192,39 +175,9 @@ const App = () => {
       return;
     }
 
-    setExpense((prev) => {
-      if (oldCategory === updatedExpense.category) {
-        return {
-          ...prev,
-          [oldCategory]: prev[oldCategory].map((item, idx) =>
-            idx === index
-              ? {
-                  title: updatedExpense.title,
-                  amount: updatedExpense.amount,
-                  date: updatedExpense.date,
-                }
-              : item
-          ),
-        };
-      } else {
-        const updatedOldCategory = prev[oldCategory].filter(
-          (_, idx) => idx !== index
-        );
-
-        return {
-          ...prev,
-          [oldCategory]: updatedOldCategory,
-          [updatedExpense.category]: [
-            ...prev[updatedExpense.category],
-            {
-              title: updatedExpense.title,
-              amount: updatedExpense.amount,
-              date: updatedExpense.date,
-            },
-          ],
-        };
-      }
-    });
+    setExpense((prev) =>
+      prev.map((exp, idx) => (idx === index ? updatedExpense : exp))
+    );
 
     setBalance(newBalance);
     setEditTransaction(null);
@@ -273,10 +226,7 @@ const App = () => {
           <h3>
             Expense:{" "}
             <span>
-              ₹
-              {Object.values(expense)
-                .flat()
-                .reduce((acc, item) => acc + item.amount, 0)}
+              ₹{expense.reduce((acc, item) => acc + item.amount, 0)}
             </span>
           </h3>
           <button onClick={addExpense}>+ Add Expense</button>
@@ -325,48 +275,44 @@ const App = () => {
         <div className="transactions">
           <h2>Transactions</h2>
           <ul className="transaction-list">
-            {getAllTransactions().length === 0 ? (
-              <li>No transactions!</li>
-            ) : (
-              getAllTransactions().map((transaction, index) => (
-                <li key={index} className="transaction-item">
-                  <div className="transaction-info">
-                    <div className="transaction-detail">
-                      <div className="transaction-category">
-                        {getCategoryIcon(transaction.category)}
-                      </div>
-                      <div className="transaction-meta">
-                        <h4 className="transaction-title">
-                          {transaction.title}
-                        </h4>
-                        <span className="transaction-date">
-                          {new Date(transaction.date).toLocaleDateString()}
-                        </span>
-                      </div>
+             {expense.length === 0 ? (
+            <li>No transactions!</li>
+          ) : (
+            expense.map((transaction, index) => (
+              <li key={index} className="transaction-item">
+                <div className="transaction-info">
+                  <div className="transaction-detail">
+                    <div className="transaction-category">
+                      {getCategoryIcon(transaction.category)}
+                    </div>
+                    <div className="transaction-meta">
+                      <h4 className="transaction-title">
+                        {transaction.title}
+                      </h4>
+                      <span className="transaction-date">
+                        {new Date(transaction.date).toLocaleDateString()}
+                      </span>
                     </div>
                   </div>
-                  <div className="transaction-actions">
-                    <p className="transaction-amount">₹{transaction.amount}</p>
-                    <button
-                      onClick={() =>
-                        handleDeleteTransaction(transaction.category, index)
-                      }
-                      className="action-btn delete-btn"
-                    >
-                      <RxCrossCircled />
-                    </button>
-                    <button
-                      onClick={() =>
-                        handleEditTransaction(transaction.category, index)
-                      }
-                      className="action-btn edit-btn"
-                    >
-                      <FiEdit2 />
-                    </button>
-                  </div>
-                </li>
-              ))
-            )}
+                </div>
+                <div className="transaction-actions">
+                  <p className="transaction-amount">₹{transaction.amount}</p>
+                  <button
+                    onClick={() => handleDeleteTransaction(index)}
+                    className="action-btn delete-btn"
+                  >
+                    <RxCrossCircled />
+                  </button>
+                  <button
+                    onClick={() => handleEditTransaction(index)}
+                    className="action-btn edit-btn"
+                  >
+                    <FiEdit2 />
+                  </button>
+                </div>
+              </li>
+            ))
+          )}
           </ul>
         </div>
         <div className="top-expense">
