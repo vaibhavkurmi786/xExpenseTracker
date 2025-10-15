@@ -325,7 +325,7 @@ const App = () => {
       </div>
       <div className="bottom-container">
         <div className="transactions">
-          <h2>Recent Transactions</h2>
+          <h2>Transactions</h2>
           <ul className="transaction-list">
             {getAllTransactions().length === 0 ? (
               <li>No transactions!</li>

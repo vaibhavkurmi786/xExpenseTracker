@@ -36,7 +36,7 @@ const MultiModal = ({
   const handleExpenseSubmit = (e) => {
     e.preventDefault();
     const title = e.target.title.value;
-    const amount = parseFloat(e.target.amount.value);
+    const amount = parseFloat(e.target.price.value);
     const category = e.target.category.value;
     const date = e.target.date.value;
 
