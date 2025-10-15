@@ -16,14 +16,22 @@ import { IoCarSportOutline } from "react-icons/io5";
 import { BiMovie } from "react-icons/bi";
 import { RxCrossCircled } from "react-icons/rx";
 import { FiEdit2 } from "react-icons/fi";
-import { SnackbarProvider, useSnackbar } from 'notistack';
+import { SnackbarProvider, useSnackbar } from "notistack";
 
 const App = () => {
-  const [balance, setBalance] = useState(5000);
-  const [expense, setExpense] = useState({
-    Food: [],
-    Entertainment: [],
-    Travel: [],
+  const [balance, setBalance] = useState(() => {
+    const savedBalance = localStorage.getItem("balance");
+    return savedBalance ? parseFloat(savedBalance) : 5000;
+  });
+  const [expense, setExpense] = useState(() => {
+    const savedExpense = localStorage.getItem("expense");
+    return savedExpense
+      ? JSON.parse(savedExpense)
+      : {
+          Food: [],
+          Entertainment: [],
+          Travel: [],
+        };
   });
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [modalType, setModalType] = useState(""); // "income" or "expense"
@@ -44,21 +52,13 @@ const App = () => {
     setModalIsOpen(false);
   };
 
-  localStorage.setItem("balance", balance);
-  localStorage.setItem("expense", JSON.stringify(expense));
+  useEffect(() => {
+    localStorage.setItem("balance", balance);
+  }, [balance]);
 
   useEffect(() => {
-    const storedBalance = localStorage.getItem("balance");
-    const storedExpense = localStorage.getItem("expense");
-
-    if (storedBalance) {
-      setBalance(Number(storedBalance));
-    }
-
-    if (storedExpense) {
-      setExpense(JSON.parse(storedExpense));
-    }
-  }, [localStorage.getItem("balance"), localStorage.getItem("expense")]);
+    localStorage.setItem("expense", JSON.stringify(expense));
+  }, [expense]);
 
   const data = {
     labels: ["Food", "Entertainment", "Travel"],
@@ -151,7 +151,6 @@ const App = () => {
   };
 
   const handleDeleteTransaction = (category, index) => {
-
     const amountToRestore = expense[category][index].amount;
 
     setExpense((prev) => ({
@@ -159,11 +158,11 @@ const App = () => {
       [category]: prev[category].filter((_, idx) => idx !== index),
     }));
 
-     setBalance(prev => prev + amountToRestore);
-    
-    enqueueSnackbar('Transaction deleted successfully!', { 
-      variant: 'success',
-      autoHideDuration: 2000
+    setBalance((prev) => prev + amountToRestore);
+
+    enqueueSnackbar("Transaction deleted successfully!", {
+      variant: "success",
+      autoHideDuration: 2000,
     });
   };
 
@@ -186,11 +185,11 @@ const App = () => {
     const newBalance = balance + balanceDifference;
 
     if (newBalance < 0) {
-       enqueueSnackbar("Not enough balance for this update!", {
-      variant: "error",
-      autoHideDuration: 3000
-    });
-    return;
+      enqueueSnackbar("Not enough balance for this update!", {
+        variant: "error",
+        autoHideDuration: 3000,
+      });
+      return;
     }
 
     setExpense((prev) => {
@@ -207,8 +206,7 @@ const App = () => {
               : item
           ),
         };
-      }
-      else {
+      } else {
         const updatedOldCategory = prev[oldCategory].filter(
           (_, idx) => idx !== index
         );
@@ -232,19 +230,19 @@ const App = () => {
     setEditTransaction(null);
   };
 
-   const handleAddBalance = (amount) => {
+  const handleAddBalance = (amount) => {
     const newAmount = parseFloat(amount);
     if (isNaN(newAmount) || newAmount <= 0) {
-      enqueueSnackbar('Please enter a valid amount!', { 
-        variant: 'error',
-        autoHideDuration: 3000
+      enqueueSnackbar("Please enter a valid amount!", {
+        variant: "error",
+        autoHideDuration: 3000,
       });
       return;
     }
-    setBalance(prevBalance => prevBalance + newAmount);
-    enqueueSnackbar('Balance added successfully!', { 
-      variant: 'success',
-      autoHideDuration: 2000
+    setBalance((prevBalance) => prevBalance + newAmount);
+    enqueueSnackbar("Balance added successfully!", {
+      variant: "success",
+      autoHideDuration: 2000,
     });
   };
 
