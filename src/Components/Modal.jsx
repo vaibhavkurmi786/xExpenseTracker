@@ -94,7 +94,7 @@ const MultiModal = ({
                 />
                 <input
                   type="number"
-                  name="amount"
+                  name="price"
                   placeholder="Price"
                   required
                   defaultValue={editTransaction?.amount || ""}
