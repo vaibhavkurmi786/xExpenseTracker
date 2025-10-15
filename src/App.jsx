@@ -16,7 +16,7 @@ import { IoCarSportOutline } from "react-icons/io5";
 import { BiMovie } from "react-icons/bi";
 import { RxCrossCircled } from "react-icons/rx";
 import { FiEdit2 } from "react-icons/fi";
-import { SnackbarProvider, useSnackbar } from "notistack";
+import { useSnackbar } from "notistack";
 
 const App = () => {
   const [balance, setBalance] = useState(() => {
@@ -24,7 +24,7 @@ const App = () => {
     return savedBalance ? parseFloat(savedBalance) : 5000;
   });
   const [expense, setExpense] = useState(() => {
-    const savedExpense = localStorage.getItem("expense");
+    const savedExpense = localStorage.getItem("expenses");
     return savedExpense
       ? JSON.parse(savedExpense)
       : {
@@ -57,7 +57,7 @@ const App = () => {
   }, [balance]);
 
   useEffect(() => {
-    localStorage.setItem("expense", JSON.stringify(expense));
+    localStorage.setItem("expenses", JSON.stringify(expense));
   }, [expense]);
 
   const data = {
